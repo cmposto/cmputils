@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.5)
+
+set(CMAKE_CONFIGURATION_TYPES "Debug" CACHE STRING "" FORCE)
+
+if (CMAKE_CURRENT_BINARY_DIR MATCHES CLion2016)
+    EXEC_PROGRAM(rm ARGS -rf ${CMAKE_SOURCE_DIR}/build)
+    EXEC_PROGRAM(ln ARGS -s ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR}/build)
+endif(CMAKE_CURRENT_BINARY_DIR MATCHES CLion2016)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_MWAITXINTRIN_H_INCLUDED")
+
+set(PROJECT_NAME LibCMPUtils)
+project(${PROJECT_NAME})
+
+set(LIBRARY_NAME cmputils)
+set(TEST_PROJECT_NAME LibCMPUtilsTests)
+
+option(USE_GPU "Buildwith GPU support")
+set(USE_GPU ON)
+
+set(LIBRARY_HEADERS_DIR include/${LIBRARY_NAME})
+set(LIBRARY_SOURCES_DIR src)
+
+set(LIBRARY_HEADERS ${LIBRARY_HEADERS_DIR}/dtw.h)
+
+if (USE_GPU)
+    find_package(CUDA QUIET REQUIRED)
+    set(LIBRARY_SOURCES ${LIBRARY_SOURCES_DIR}/dtw_gpu.cu ${LIBRARY_SOURCES_DIR}/a.cpp ${LIBRARY_SOURCES_DIR}/cuda_utils.h)
+    cuda_add_library(${LIBRARY_NAME} SHARED ${LIBRARY_HEADERS} ${LIBRARY_SOURCES})
+else (USE_GPU)
+    set(LIBRARY_SOURCES ${LIBRARY_SOURCES_DIR}/dtw_cpu.cpp)
+    add_library(${LIBRARY_NAME} SHARED ${LIBRARY_HEADERS} ${LIBRARY_SOURCES})
+endif (USE_GPU)
+
+enable_testing()
+add_subdirectory(test)
+add_subdirectory(cython)
